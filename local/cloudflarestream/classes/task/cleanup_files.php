@@ -58,27 +58,28 @@ class cleanup_files extends \core\task\scheduled_task {
 
         if (empty($readyvideos)) {
             mtrace('No files to clean up.');
-            return;
-        }
+        } else {
+            mtrace('Found ' . count($readyvideos) . ' videos ready for file cleanup.');
 
-        mtrace('Found ' . count($readyvideos) . ' videos ready for file cleanup.');
+            $cleaned = 0;
+            $errors = 0;
 
-        $cleaned = 0;
-        $errors = 0;
-
-        foreach ($readyvideos as $video) {
-            try {
-                if ($this->cleanup_video_file($video)) {
-                    $cleaned++;
-                    mtrace("Cleaned up file for video {$video->id}");
-                } else {
+            foreach ($readyvideos as $video) {
+                try {
+                    if ($this->cleanup_video_file($video)) {
+                        $cleaned++;
+                        mtrace("Cleaned up file for video {$video->id}");
+                    } else {
+                        $errors++;
+                        mtrace("Failed to clean up file for video {$video->id}");
+                    }
+                } catch (\Exception $e) {
                     $errors++;
-                    mtrace("Failed to clean up file for video {$video->id}");
+                    mtrace("Exception cleaning up video {$video->id}: " . $e->getMessage());
                 }
-            } catch (\Exception $e) {
-                $errors++;
-                mtrace("Exception cleaning up video {$video->id}: " . $e->getMessage());
             }
+
+            mtrace("Video file cleanup completed. Cleaned: {$cleaned}, Errors: {$errors}");
         }
 
         // Clean up temporary files
@@ -87,7 +88,13 @@ class cleanup_files extends \core\task\scheduled_task {
             mtrace("Cleaned up {$tempCleaned} temporary files.");
         }
 
-        mtrace("File cleanup completed. Cleaned: {$cleaned}, Errors: {$errors}");
+        // Clean up orphaned files
+        $orphanedCleaned = $this->cleanup_orphaned_files();
+        if ($orphanedCleaned > 0) {
+            mtrace("Cleaned up {$orphanedCleaned} orphaned files.");
+        }
+
+        mtrace("File cleanup task completed successfully.");
     }
 
     /**
@@ -244,6 +251,106 @@ class cleanup_files extends \core\task\scheduled_task {
     }
 
     /**
+     * Clean up orphaned files that have no corresponding video record.
+     *
+     * @return int Number of orphaned files cleaned
+     */
+    private function cleanup_orphaned_files() {
+        global $DB;
+
+        $cleaned = 0;
+        $supportedFormats = explode(',', config_manager::get('supported_formats', 'mp4,mov,avi,mkv,webm'));
+        $supportedFormats = array_map('trim', $supportedFormats);
+
+        // Find video files that are not referenced in our video table
+        $fs = get_file_storage();
+        
+        // Get all video files from the file system
+        foreach ($supportedFormats as $format) {
+            $files = $fs->get_area_files_select(
+                \context_system::instance()->id,
+                'user',
+                'draft',
+                false,
+                "filename LIKE ?",
+                ["%.$format"]
+            );
+
+            foreach ($files as $file) {
+                if ($this->is_orphaned_video_file($file)) {
+                    // Check if file is old enough to be considered orphaned
+                    $fileAge = time() - $file->get_timecreated();
+                    $orphanThreshold = 86400; // 24 hours
+                    
+                    if ($fileAge > $orphanThreshold) {
+                        try {
+                            mtrace("Removing orphaned file: " . $file->get_filename());
+                            $file->delete();
+                            $cleaned++;
+                        } catch (\Exception $e) {
+                            mtrace("Failed to delete orphaned file {$file->get_filename()}: " . $e->getMessage());
+                        }
+                    }
+                }
+            }
+        }
+
+        return $cleaned;
+    }
+
+    /**
+     * Check if a file is orphaned (not referenced in video table).
+     *
+     * @param \stored_file $file File to check
+     * @return bool True if orphaned
+     */
+    private function is_orphaned_video_file($file) {
+        global $DB;
+
+        // Check if file is referenced in our video table
+        $exists = $DB->record_exists(video_manager::TABLE_VIDEOS, ['moodle_file_id' => $file->get_id()]);
+        
+        if ($exists) {
+            return false;
+        }
+
+        // Check if file is being used in any course content
+        $contextid = $file->get_contextid();
+        $component = $file->get_component();
+        $filearea = $file->get_filearea();
+        
+        // Skip system files and files in active use
+        if ($component !== 'user' || $filearea !== 'draft') {
+            return false;
+        }
+
+        // Additional checks for file usage
+        return !$this->is_file_in_active_use($file);
+    }
+
+    /**
+     * Check if file is currently in active use.
+     *
+     * @param \stored_file $file File to check
+     * @return bool True if in active use
+     */
+    private function is_file_in_active_use($file) {
+        global $DB;
+
+        // Check if file is part of an active upload process
+        $itemid = $file->get_itemid();
+        
+        // Check if there's a recent upload queue entry for this file
+        $recentUpload = $DB->record_exists_select(
+            'local_cloudflarestream_queue',
+            'file_id = ? AND created_at > ?',
+            [$file->get_id(), time() - 3600] // Within last hour
+        );
+
+        return $recentUpload;
+    }
+
+    /**
      * Get cleanup statistics.
      *
      * @return array Cleanup statistics
@@ -270,6 +377,44 @@ class cleanup_files extends \core\task\scheduled_task {
             [video_manager::STATUS_READY, '%"file_cleaned":true%']
         );
 
+        // Count potential orphaned files
+        $stats['orphaned_files'] = $this->count_orphaned_files();
+
         return $stats;
+    }
+
+    /**
+     * Count orphaned files without cleaning them.
+     *
+     * @return int Number of orphaned files
+     */
+    private function count_orphaned_files() {
+        $count = 0;
+        $supportedFormats = explode(',', config_manager::get('supported_formats', 'mp4,mov,avi,mkv,webm'));
+        $supportedFormats = array_map('trim', $supportedFormats);
+
+        $fs = get_file_storage();
+        
+        foreach ($supportedFormats as $format) {
+            $files = $fs->get_area_files_select(
+                \context_system::instance()->id,
+                'user',
+                'draft',
+                false,
+                "filename LIKE ?",
+                ["%.$format"]
+            );
+
+            foreach ($files as $file) {
+                if ($this->is_orphaned_video_file($file)) {
+                    $fileAge = time() - $file->get_timecreated();
+                    if ($fileAge > 86400) { // 24 hours
+                        $count++;
+                    }
+                }
+            }
+        }
+
+        return $count;
     }
 }

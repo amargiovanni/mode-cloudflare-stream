@@ -204,4 +204,12 @@ if ($hassiteconfig) {
     ));
 
     $ADMIN->add('localplugins', $settings);
+
+    // Add dashboard page
+    $ADMIN->add('localplugins', new admin_externalpage(
+        'local_cloudflarestream_dashboard',
+        get_string('dashboard', 'local_cloudflarestream'),
+        new moodle_url('/local/cloudflarestream/admin_dashboard.php'),
+        'moodle/site:config'
+    ));
 }

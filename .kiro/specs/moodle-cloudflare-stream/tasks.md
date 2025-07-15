@@ -117,15 +117,15 @@
     - Write integration tests for player security features
     - _Requirements: 3.1, 3.3, 5.3_
 
-- [ ] 8. Develop monitoring and administration tools
-  - [-] 8.1 Create admin dashboard
+- [x] 8. Develop monitoring and administration tools
+  - [x] 8.1 Create admin dashboard
     - Build video status monitoring interface
     - Implement usage statistics display and reporting
     - Add error log viewing and filtering functionality
     - Create bulk operations for video management
     - _Requirements: 4.1, 4.2, 4.3_
 
-  - [ ] 8.2 Implement health checking and alerts
+  - [x] 8.2 Implement health checking and alerts
     - Create system health check functionality
     - Add automated error detection and notification system
     - Implement sync status monitoring between Moodle and Cloudflare
@@ -133,14 +133,14 @@
     - _Requirements: 4.2, 6.3_
 
 - [ ] 9. Build maintenance and cleanup systems
-  - [ ] 9.1 Implement file cleanup automation
+  - [x] 9.1 Implement file cleanup automation
     - Create scheduled task for local file removal after Cloudflare upload
     - Add configurable grace period for file retention
     - Implement orphaned file detection and cleanup
     - Write cleanup status reporting and logging
     - _Requirements: 6.1, 6.3_
 
-  - [ ] 9.2 Create video synchronization system
+  - [-] 9.2 Create video synchronization system
     - Implement sync task for video status updates from Cloudflare
     - Add orphaned video detection on both platforms
     - Create manual sync tools for administrators

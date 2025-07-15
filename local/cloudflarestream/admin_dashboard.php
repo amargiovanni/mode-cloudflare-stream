@@ -48,12 +48,38 @@ if ($action && confirm_sesskey()) {
     switch ($action) {
         case 'sync_videos':
             if ($confirm) {
-                $streammanager = \local_cloudflarestream\api\stream_manager::get_instance();
-                if ($streammanager) {
-                    $result = $streammanager->sync_orphaned_videos();
-                    \core\notification::success("Synced {$result['success']} videos, {$result['failed']} failed");
+                $result = \local_cloudflarestream\sync_manager::manual_full_sync(false);
+                if ($result['success']) {
+                    \core\notification::success("Sync completed: {$result['updated']} videos updated, {$result['errors']} errors");
                 } else {
-                    \core\notification::error('Stream manager not available');
+                    \core\notification::error('Sync failed: ' . ($result['error'] ?? 'Unknown error'));
+                }
+                redirect($PAGE->url);
+            }
+            break;
+            
+        case 'sync_all_videos':
+            if ($confirm) {
+                $result = \local_cloudflarestream\sync_manager::manual_full_sync(true);
+                if ($result['success']) {
+                    \core\notification::success("Full sync completed: {$result['updated']} videos updated, {$result['errors']} errors");
+                } else {
+                    \core\notification::error('Full sync failed: ' . ($result['error'] ?? 'Unknown error'));
+                }
+                redirect($PAGE->url);
+            }
+            break;
+            
+        case 'cleanup_orphans':
+            if ($confirm) {
+                $result = \local_cloudflarestream\sync_manager::cleanup_orphaned_videos(false);
+                if ($result['success']) {
+                    $message = "Orphan cleanup completed: ";
+                    $message .= "{$result['moodle_orphans_cleaned']} Moodle orphans cleaned, ";
+                    $message .= "{$result['cloudflare_orphans_cleaned']} Cloudflare orphans cleaned";
+                    \core\notification::success($message);
+                } else {
+                    \core\notification::error('Orphan cleanup failed: ' . ($result['error'] ?? 'Unknown error'));
                 }
                 redirect($PAGE->url);
             }
