@@ -25,12 +25,13 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_cloudflarestream';
-$plugin->version = 2025011500; // YYYYMMDDHH format
-$plugin->requires = 2020061500; // Moodle 3.9.0
-$plugin->supported = [39, 404]; // Moodle 3.9 to 4.4
-$plugin->maturity = MATURITY_STABLE;
 $plugin->release = '1.0.0';
+$plugin->version = 2025011500; // YYYYMMDDHH format
+$plugin->requires = 2022041900; // Moodle 4.0
+$plugin->maturity = MATURITY_STABLE;
+$plugin->supported = [400, 404]; // Moodle 4.0 to 4.4
 
+// Plugin dependencies
 $plugin->dependencies = [
-    'core' => 2020061500,
+    // No required dependencies
 ];

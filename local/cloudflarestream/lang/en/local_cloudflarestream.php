@@ -128,3 +128,36 @@ $string['task_process_queue'] = 'Process Cloudflare Stream upload queue';
 $string['task_sync_videos'] = 'Sync video status with Cloudflare Stream';
 $string['task_cleanup_files'] = 'Clean up local video files';
 $string['task_cleanup_tokens'] = 'Clean up expired access tokens';
+
+// Privacy API
+$string['privacy:metadata:videos'] = 'Information about videos uploaded to Cloudflare Stream';
+$string['privacy:metadata:videos:user_id'] = 'The ID of the user who uploaded the video';
+$string['privacy:metadata:videos:course_id'] = 'The ID of the course where the video was uploaded';
+$string['privacy:metadata:videos:moodle_file_id'] = 'The ID of the original file in Moodle';
+$string['privacy:metadata:videos:cloudflare_video_id'] = 'The unique identifier for the video on Cloudflare Stream';
+$string['privacy:metadata:videos:status'] = 'The current processing status of the video';
+$string['privacy:metadata:videos:upload_date'] = 'When the video was uploaded';
+$string['privacy:metadata:videos:ready_date'] = 'When the video became ready for streaming';
+$string['privacy:metadata:videos:file_size'] = 'The size of the video file in bytes';
+$string['privacy:metadata:videos:metadata'] = 'Additional metadata about the video';
+$string['privacy:metadata:videos:error_message'] = 'Error message if video processing failed';
+
+$string['privacy:metadata:tokens'] = 'Access tokens used for secure video viewing';
+$string['privacy:metadata:tokens:user_id'] = 'The ID of the user who requested access to the video';
+$string['privacy:metadata:tokens:video_id'] = 'The ID of the video being accessed';
+$string['privacy:metadata:tokens:token_hash'] = 'Hashed version of the access token';
+$string['privacy:metadata:tokens:expires_at'] = 'When the access token expires';
+$string['privacy:metadata:tokens:created_at'] = 'When the access token was created';
+$string['privacy:metadata:tokens:last_used'] = 'When the access token was last used';
+$string['privacy:metadata:tokens:ip_address'] = 'IP address from which the token was used';
+$string['privacy:metadata:tokens:user_agent'] = 'Browser user agent string when token was used';
+
+$string['privacy:metadata:cloudflare'] = 'Video content and metadata stored on Cloudflare Stream service';
+$string['privacy:metadata:cloudflare:video_content'] = 'The actual video file content uploaded to Cloudflare Stream';
+$string['privacy:metadata:cloudflare:video_metadata'] = 'Video metadata such as filename, duration, and encoding information';
+$string['privacy:metadata:cloudflare:access_logs'] = 'Logs of when and how videos are accessed through Cloudflare Stream';
+
+$string['privacy:path:videos'] = 'Videos';
+$string['privacy:path:tokens'] = 'Access Tokens';
+$string['privacy:path:all_videos'] = 'All Videos';
+$string['privacy:path:all_tokens'] = 'All Access Tokens';

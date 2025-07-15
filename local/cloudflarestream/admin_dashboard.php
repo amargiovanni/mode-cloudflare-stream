@@ -336,10 +336,24 @@ function render_admin_actions() {
     $actions = [
         [
             'title' => 'Sync Videos',
-            'description' => 'Sync video status with Cloudflare Stream',
+            'description' => 'Sync pending/processing videos with Cloudflare Stream',
             'action' => 'sync_videos',
             'class' => 'btn-primary',
             'icon' => 'fa-refresh'
+        ],
+        [
+            'title' => 'Full Sync',
+            'description' => 'Force sync all videos including ready ones',
+            'action' => 'sync_all_videos',
+            'class' => 'btn-info',
+            'icon' => 'fa-refresh'
+        ],
+        [
+            'title' => 'Cleanup Orphans',
+            'description' => 'Remove orphaned videos from both platforms',
+            'action' => 'cleanup_orphans',
+            'class' => 'btn-danger',
+            'icon' => 'fa-unlink'
         ],
         [
             'title' => 'Cleanup Tokens',
