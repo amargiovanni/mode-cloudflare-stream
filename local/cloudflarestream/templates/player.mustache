@@ -1,0 +1,106 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_cloudflarestream/player
+
+    Cloudflare Stream video player template.
+
+    Context variables required for this template:
+    * player_id - Unique ID for the player element
+    * video_id - Cloudflare Stream video ID
+    * width - Player width
+    * height - Player height
+    * title - Video title
+    * controls - Whether to show controls
+    * autoplay - Whether to autoplay
+    * responsive - Whether player should be responsive
+    * poster - Thumbnail URL
+}}
+
+<div class="cloudflare-stream-wrapper{{#responsive}} cloudflare-stream-container{{/responsive}}" 
+     data-video-id="{{video_id}}" 
+     data-video-record-id="{{video_record_id}}"
+     data-token-expires="{{token_expires}}">
+    
+    {{#responsive}}
+        <iframe id="{{player_id}}"
+                src="https://embed.cloudflarestream.com/{{video_id}}?{{#controls}}controls=true{{/controls}}{{^controls}}controls=false{{/controls}}{{#autoplay}}&autoplay=true{{/autoplay}}{{#muted}}&muted=true{{/muted}}{{#loop}}&loop=true{{/loop}}&preload={{preload}}"
+                style="border: none; position: absolute; top: 0; left: 0; height: 100%; width: 100%;"
+                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                allowfullscreen="true"
+                title="{{title}}">
+        </iframe>
+    {{/responsive}}
+    
+    {{^responsive}}
+        <iframe id="{{player_id}}"
+                src="https://embed.cloudflarestream.com/{{video_id}}?{{#controls}}controls=true{{/controls}}{{^controls}}controls=false{{/controls}}{{#autoplay}}&autoplay=true{{/autoplay}}{{#muted}}&muted=true{{/muted}}{{#loop}}&loop=true{{/loop}}&preload={{preload}}"
+                width="{{width}}"
+                height="{{height}}"
+                style="border: none;"
+                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                allowfullscreen="true"
+                title="{{title}}">
+        </iframe>
+    {{/responsive}}
+    
+    {{#poster}}
+    <div class="cloudflare-stream-poster" style="display: none;">
+        <img src="{{poster}}" alt="{{title}}" style="width: 100%; height: auto;">
+    </div>
+    {{/poster}}
+    
+    <div class="cloudflare-stream-error" style="display: none;">
+        <div class="alert alert-warning">
+            <i class="fa fa-exclamation-triangle"></i>
+            <span class="error-message">Unable to load video player</span>
+        </div>
+    </div>
+</div>
+
+<style>
+.cloudflare-stream-container {
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    background: #000;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.cloudflare-stream-wrapper {
+    margin: 1rem 0;
+}
+
+.cloudflare-stream-error {
+    padding: 1rem;
+    text-align: center;
+}
+
+.cloudflare-stream-poster {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>

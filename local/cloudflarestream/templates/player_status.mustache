@@ -1,0 +1,149 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_cloudflarestream/player_status
+
+    Cloudflare Stream video status display template.
+
+    Context variables required for this template:
+    * video_id - Video record ID
+    * status - Current video status
+    * status_message - Human readable status message
+    * progress - Progress percentage
+    * width - Player width
+    * height - Player height
+    * title - Video title
+    * error_message - Error message if status is error
+}}
+
+<div class="cloudflare-stream-status" 
+     style="width: {{width}}; height: {{height}}; min-height: 200px;"
+     data-video-id="{{video_id}}"
+     data-status="{{status}}">
+    
+    <div class="status-content">
+        <div class="status-icon">
+            {{#status}}
+                {{#eq status "pending"}}
+                    <i class="fa fa-clock-o fa-3x text-muted"></i>
+                {{/eq}}
+                {{#eq status "uploading"}}
+                    <i class="fa fa-upload fa-3x text-info"></i>
+                {{/eq}}
+                {{#eq status "processing"}}
+                    <i class="fa fa-cog fa-spin fa-3x text-primary"></i>
+                {{/eq}}
+                {{#eq status "error"}}
+                    <i class="fa fa-exclamation-triangle fa-3x text-danger"></i>
+                {{/eq}}
+            {{/status}}
+        </div>
+        
+        <div class="status-text">
+            <h4>{{title}}</h4>
+            <p class="status-message">{{status_message}}</p>
+            
+            {{#error_message}}
+            <div class="alert alert-danger">
+                <strong>Error:</strong> {{error_message}}
+            </div>
+            {{/error_message}}
+            
+            {{^error_message}}
+                {{#progress}}
+                <div class="progress cloudflare-stream-progress">
+                    <div class="progress-bar progress-bar-striped{{#eq status "processing"}} progress-bar-animated{{/eq}}" 
+                         role="progressbar" 
+                         style="width: {{progress}}%"
+                         aria-valuenow="{{progress}}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">
+                        {{progress}}%
+                    </div>
+                </div>
+                {{/progress}}
+            {{/error_message}}
+        </div>
+        
+        {{#eq status "error"}}
+        <div class="status-actions">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="location.reload();">
+                <i class="fa fa-refresh"></i> Retry
+            </button>
+        </div>
+        {{/eq}}
+    </div>
+</div>
+
+<style>
+.cloudflare-stream-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.cloudflare-stream-status .status-content {
+    padding: 2rem;
+    max-width: 400px;
+}
+
+.cloudflare-stream-status .status-icon {
+    margin-bottom: 1rem;
+}
+
+.cloudflare-stream-status .status-text h4 {
+    margin-bottom: 0.5rem;
+    color: #495057;
+}
+
+.cloudflare-stream-status .status-message {
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.cloudflare-stream-progress {
+    width: 100%;
+    max-width: 300px;
+    margin: 1rem auto;
+}
+
+.cloudflare-stream-status .status-actions {
+    margin-top: 1rem;
+}
+
+.cloudflare-stream-status .alert {
+    text-align: left;
+    margin-top: 1rem;
+}
+</style>
+
+<script>
+// Auto-refresh status for processing videos
+(function() {
+    var statusElement = document.querySelector('[data-status="{{status}}"]');
+    if (statusElement && ['pending', 'uploading', 'processing'].includes('{{status}}')) {
+        setTimeout(function() {
+            location.reload();
+        }, 30000); // Refresh every 30 seconds
+    }
+})();
+</script>

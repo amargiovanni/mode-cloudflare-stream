@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/cloudflarestream/db" VERSION="20250115" COMMENT="XMLDB file for Moodle local/cloudflarestream"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="local_cloudflarestream_videos" COMMENT="Stores information about videos uploaded to Cloudflare Stream">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="moodle_file_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Reference to Moodle file record"/>
+        <FIELD NAME="cloudflare_video_id" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Cloudflare Stream video ID"/>
+        <FIELD NAME="course_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Course where video is used"/>
+        <FIELD NAME="user_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="User who uploaded the video"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="pending" SEQUENCE="false" COMMENT="Video processing status"/>
+        <FIELD NAME="upload_date" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Timestamp when upload started"/>
+        <FIELD NAME="processing_date" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when processing started"/>
+        <FIELD NAME="ready_date" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when video became ready"/>
+        <FIELD NAME="file_size" TYPE="int" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="Original file size in bytes"/>
+        <FIELD NAME="duration" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Video duration in seconds"/>
+        <FIELD NAME="thumbnail_url" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="URL to video thumbnail"/>
+        <FIELD NAME="error_message" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Error message if upload failed"/>
+        <FIELD NAME="metadata" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Additional video metadata as JSON"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Timestamp when record was created"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Timestamp when record was last modified"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="moodle_file_id" TYPE="foreign-unique" FIELDS="moodle_file_id" REFTABLE="files" REFFIELDS="id"/>
+        <KEY NAME="course_id" TYPE="foreign" FIELDS="course_id" REFTABLE="course" REFFIELDS="id"/>
+        <KEY NAME="user_id" TYPE="foreign" FIELDS="user_id" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="cloudflare_video_id" UNIQUE="true" FIELDS="cloudflare_video_id"/>
+        <INDEX NAME="status" UNIQUE="false" FIELDS="status"/>
+        <INDEX NAME="course_status" UNIQUE="false" FIELDS="course_id, status"/>
+        <INDEX NAME="upload_date" UNIQUE="false" FIELDS="upload_date"/>
+      </INDEXES>
+    </TABLE>
+    
+    <TABLE NAME="local_cloudflarestream_tokens" COMMENT="Stores access tokens for video streaming">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="user_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="User who owns the token"/>
+        <FIELD NAME="video_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Reference to cloudflarestream_videos table"/>
+        <FIELD NAME="token_hash" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Hashed access token"/>
+        <FIELD NAME="expires_at" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Token expiration timestamp"/>
+        <FIELD NAME="created_at" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Token creation timestamp"/>
+        <FIELD NAME="last_used" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Last time token was used"/>
+        <FIELD NAME="ip_address" TYPE="char" LENGTH="45" NOTNULL="false" SEQUENCE="false" COMMENT="IP address where token was created"/>
+        <FIELD NAME="user_agent" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="User agent string"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="user_id" TYPE="foreign" FIELDS="user_id" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="video_id" TYPE="foreign" FIELDS="video_id" REFTABLE="local_cloudflarestream_videos" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="token_hash" UNIQUE="true" FIELDS="token_hash"/>
+        <INDEX NAME="user_video" UNIQUE="false" FIELDS="user_id, video_id"/>
+        <INDEX NAME="expires_at" UNIQUE="false" FIELDS="expires_at"/>
+        <INDEX NAME="created_at" UNIQUE="false" FIELDS="created_at"/>
+      </INDEXES>
+    </TABLE>
+    
+    <TABLE NAME="local_cloudflarestream_queue" COMMENT="Queue for background video processing">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="video_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Reference to cloudflarestream_videos table"/>
+        <FIELD NAME="action" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false" COMMENT="Action to perform (upload, delete, sync)"/>
+        <FIELD NAME="priority" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="5" SEQUENCE="false" COMMENT="Processing priority (1-10)"/>
+        <FIELD NAME="attempts" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Number of processing attempts"/>
+        <FIELD NAME="max_attempts" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="3" SEQUENCE="false" COMMENT="Maximum allowed attempts"/>
+        <FIELD NAME="next_attempt" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Timestamp for next processing attempt"/>
+        <FIELD NAME="data" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Additional data for processing as JSON"/>
+        <FIELD NAME="error_log" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Error messages from failed attempts"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Timestamp when queued"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Timestamp when last modified"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="video_id" TYPE="foreign" FIELDS="video_id" REFTABLE="local_cloudflarestream_videos" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="action_priority" UNIQUE="false" FIELDS="action, priority"/>
+        <INDEX NAME="next_attempt" UNIQUE="false" FIELDS="next_attempt"/>
+        <INDEX NAME="attempts" UNIQUE="false" FIELDS="attempts"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

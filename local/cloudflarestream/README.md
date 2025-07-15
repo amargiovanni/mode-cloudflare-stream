@@ -1,4 +1,4 @@
-# Cloudflare Stream Integration for Tutorami
+# Cloudflare Stream Integration for Moodle
 
 A Moodle local plugin that integrates with Cloudflare Stream to provide secure, high-performance video streaming for e-learning courses.
 
@@ -63,4 +63,4 @@ For issues, feature requests, or contributions, please visit the plugin's reposi
 
 ## License
 
-This plugin is licensed under the GNU General Public License v3.0 or later.# mode-cloudflare-stream
+This plugin is licensed under the GNU General Public License v3.0 or later.
